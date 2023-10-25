@@ -1,0 +1,30 @@
+#Deploys the Runner Deployment manifest for am Organization
+resource "kubernetes_manifest" "runner_deployment_org" {
+  manifest = yamldecode(<<-EOF
+    apiVersion: actions.summerwind.dev/v1alpha1
+    kind: RunnerDeployment
+    metadata:
+      name: ${var.runner_deployment_name}-org
+      namespace: ${module.gh_actions_controller.runner_namespace}
+    spec:
+      template:
+        spec:
+          organization: <YOUR-GITHUB-ORGANIZATION-NAME>
+          group: <EXISTING-GITHUB-RUNNER-GROUP-NAME>
+          image: "${local.artifact_registry_repository}/custom-runner-deployment"
+          serviceAccountName: ${var.service_account_name}
+          nodeSelector:
+            purpose: ${local.node_selector_label_value}
+          labels:
+            - gke-runner
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "200m"
+              memory: "512Mi"
+    EOF
+  )
+  depends_on = [module.gh_actions_controller]
+}
